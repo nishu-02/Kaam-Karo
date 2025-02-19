@@ -1,4 +1,11 @@
-import { StyleSheet, SafeAreaView, View, Text, FlatList } from "react-native";
+import {
+  StyleSheet,
+  SafeAreaView,
+  View,
+  Text,
+  FlatList,
+  Button,
+} from "react-native";
 import React, { useState, useEffect } from "react";
 
 export default function HomeScreen() {
@@ -9,7 +16,7 @@ export default function HomeScreen() {
     const fetchTodos = async () => {
       try {
         const response = await fetch(
-          "https://todocurd.chiggydoes.tech/todos/",
+          "https://todocrud.chiggydoes.tech/todos/",
           {
             method: "GET",
             headers: {
@@ -41,6 +48,32 @@ export default function HomeScreen() {
     created_at: string;
   }
 
+  const addTask = async (title: string, description: string) => {
+    try {
+      const response = await fetch("https://todocrud.chiggydoes.tech/todos/", {
+        method: "POST",
+        headers: {
+          "X-API-Key": "tTAiBltwF2FzOv4tR9FKNe_Zy7oo3q7knyC_HFv2QSk",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "New Task",
+          description: "New Task Description",
+          status: "Pending", // setting up the default status
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("The new task has been added", result);
+      return result;
+    } catch (errr) {
+      console.error(errr);
+    }
+  };
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "beige" }}>
       {error ? (
@@ -56,11 +89,17 @@ export default function HomeScreen() {
               <Text>{item.title}</Text>
               <Text>{item.description}</Text>
               <Text> Status: {item.status}</Text>
+              <Text> Date: {item.created_at} </Text>
             </View>
           )}
           ListEmptyComponent={<Text> No Todo to be Found</Text>}
         />
       )}
+
+      <Button
+        title="Add a Task"
+        onPress={() => console.log("Add a Task")}
+      ></Button>
     </SafeAreaView>
   );
 }
