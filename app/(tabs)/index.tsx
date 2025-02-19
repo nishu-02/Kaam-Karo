@@ -74,6 +74,33 @@ export default function HomeScreen() {
       console.error(errr);
     }
   };
+
+  const updateTask = async (id: number, status: string) => {
+    try {
+      const response = await fetch(`https://todocrud.chiggydoes.tech/todos/${id}`, {
+        method : "PATCH",
+        headers : {
+          "X-API-Key": "tTAiBltwF2FzOv4tR9FKNe_Zy7oo3q7knyC_HFv2QSk",
+          "Content-Type": "application/json",
+        },
+        body : JSON.stringify({
+          status : "Completed",
+          description : "Edit the description or the goals"
+      }),
+    }),
+
+    if(!response.ok){
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const updatedTask = await response.json();
+    console.log("The task has been updated", updatedTask);
+    return updatedTask;
+  } catch (err) {
+    console.error(err);
+  }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "beige" }}>
       {error ? (
