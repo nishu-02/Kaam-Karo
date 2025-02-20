@@ -14,6 +14,7 @@ import {
   Platform
 } from "react-native";
 import React, { useState, useEffect, useRef } from "react";
+import { hide } from "expo-router/build/utils/splash";
 
 const API_KEY = "Wam_xPaHALBkRbPkXjM0uhNZ5pfnixeZfDnYnB6S3kY";
 const URL = "https://todocrud.chiggydoes.tech";
@@ -83,6 +84,11 @@ export default function HomeScreen() {
   }, []);
 
   const addTask = async () => {
+    if (!newTitle.trim()) {
+      alert("Please enter a valid title");
+      return;
+    }
+
     try {
       const response = await fetch(`${URL}/todos/`, {
         method: "POST",
@@ -91,8 +97,8 @@ export default function HomeScreen() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          title,
-          description,
+          title : newTitle,
+          description : newDescription,
           status: "Pending",
         }),
       });
@@ -103,7 +109,8 @@ export default function HomeScreen() {
 
       const result = await response.json();
       console.log("The new task has been added", result);
-      fetchTodos(); // Refresh the list
+      hideModal();
+      fetchTodos(); // Refreshing the list
     } catch (err) {
       console.error(err);
     }
@@ -162,7 +169,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "beige" }}>
+    <SafeAreaView style= {styles.container}>
       {error ? (
         <View>
           <Text>{error}</Text>
@@ -172,23 +179,194 @@ export default function HomeScreen() {
           data={notes}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
-            <View>
+            <View style = { styles.todoItem}>
               <Text>{item.title}</Text>
               <Text>{item.description}</Text>
               <Text>Status: {item.status}</Text>
               <Text>Date: {item.created_at}</Text>
-              <Button
-                title="Complete"
-                onPress={() => updateTask(item.id, "Completed", item.description)}
-              />
-              <Button title="Delete" onPress={() => deleteTask(item.id)} />
+              <View style = { styles.buttonContainer }>
+              <TouchableOpacity
+              style = {[ styles.button, styles.completeButton]}
+              onPress={() => updateTask(item.id, "Completed", item.description)}
+              >
+                <Text style = { styles.buttonText}>Complete</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+              style = {[ styles.button, styles.deleteButton]}
+              onPress={() => deleteTask(item.id)}
+              >
+                <Text style = {styles.buttonText}>Delete</Text>
+              </TouchableOpacity>
+            </View>
             </View>
           )}
-          ListEmptyComponent={<Text>No Todos Found</Text>}
+          ListEmptyComponent={<Text style = {styles.emptyText}>No Todos Found</Text>}
         />
       )}
 
-      <Button title="Add a Task" onPress={() => addTask("Sample Task", "This is a test task")} />
+      <TouchableOpacity
+      style = {styles.addButton}
+      onPress={showModal}
+      >
+        <Text style = {styles.addButton}> + Add a Task </Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F5",
+  },
+  todoItem: {
+    backgroundColor: "white",
+    padding: 15,
+    marginHorizontal: 15,
+    marginVertical: 8,
+    borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 5,
+  },
+  description: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 5,
+  },
+  status: {
+    fontSize: 14,
+    color: "#888",
+  },
+  date: {
+    fontSize: 14,
+    color: "#888",
+    marginBottom: 10,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  button: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    flex: 0.48,
+  },
+  completeButton: {
+    backgroundColor: "#4CAF50",
+  },
+  deleteButton: {
+    backgroundColor: "#F44336",
+  },
+  buttonText: {
+    color: "white",
+    textAlign: "center",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  emptyText: {
+    textAlign: "center",
+    marginTop: 20,
+    fontSize: 16,
+    color: "#666",
+  },
+  addButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 30,
+    backgroundColor: "#2196F3",
+    width: 120,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  addButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
+  modalOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    fontSize: 24,
+    color: "#666",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: "top",
+  },
+  submitButton: {
+    backgroundColor: "#2196F3",
+    padding: 15,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  submitButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});
