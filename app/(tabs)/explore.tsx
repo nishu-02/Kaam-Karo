@@ -1,136 +1,257 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, Animated, Alert } from "react-native";
-import { Card, Button } from "react-native-paper";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import LinearGradient from "react-native-linear-gradient";
+import React, { useState, useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Calendar, DateData } from 'react-native-calendars';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const STREAK_KEY = "streak";
-const LAST_PLAYED_KEY = "last_played";
+interface Task {
+  id: number;
+  title: string;
+  description: string;
+  status: string;
+  created_at: string;
+}
 
-const challenges = [
-  "🔥 Do 10 push-ups!",
-  "😊 Say something nice to yourself!",
-  "😂 Tell a joke to a friend!",
-  "🤸 Stretch for 30 seconds!",
-  "🎵 Dance to your favorite song!",
-  "📖 Read 1 page of a book!",
-];
+interface MarkedDates {
+  [date: string]: {
+    marked: boolean;
+    dotColor: string;
+    selected?: boolean;
+    selectedColor?: string;
+  };
+}
 
-const getRandomChallenge = () => challenges[Math.floor(Math.random() * challenges.length)];
-
-const explore = () => {
-  const [streak, setStreak] = useState<number>(0);
-  const [challenge, setChallenge] = useState<string>("");
-  const scaleAnim = new Animated.Value(0.9); // Animation for pop effect
+export default function CalendarScreen() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [deadlines, setDeadlines] = useState<{ [key: string]: number[] }>({});
+  const [markedDates, setMarkedDates] = useState<MarkedDates>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedDateTasks, setSelectedDateTasks] = useState<Task[]>([]);
 
   useEffect(() => {
-    checkStreak();
-    setChallenge(getRandomChallenge());
-    animateCard();
+    loadDeadlinesAndTasks();
   }, []);
 
-  const animateCard = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      friction: 3,
-      tension: 100,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const checkStreak = async () => {
+  const loadDeadlinesAndTasks = async () => {
     try {
-      const lastPlayed = await AsyncStorage.getItem(LAST_PLAYED_KEY);
-      const storedStreak = await AsyncStorage.getItem(STREAK_KEY);
+      const savedDeadlines = await AsyncStorage.getItem('deadlines');
+      const deadlinesData = savedDeadlines ? JSON.parse(savedDeadlines) : {};
+      setDeadlines(deadlinesData);
 
-      const today = new Date().setHours(0, 0, 0, 0);
-      const lastDate = lastPlayed ? new Date(parseInt(lastPlayed)).setHours(0, 0, 0, 0) : null;
+      const savedTasks = await AsyncStorage.getItem('tasks');
+      const tasksData = savedTasks ? JSON.parse(savedTasks) : [];
+      setTasks(tasksData);
 
-      if (!lastDate) {
-        await AsyncStorage.setItem(STREAK_KEY, "1");
-        await AsyncStorage.setItem(LAST_PLAYED_KEY, today.toString());
-        setStreak(1);
-        return;
-      }
-
-      const diffDays = (today - lastDate) / (1000 * 60 * 60 * 24);
-
-      if (diffDays === 1) {
-        const newStreak = (storedStreak ? parseInt(storedStreak) : 0) + 1;
-        await AsyncStorage.setItem(STREAK_KEY, newStreak.toString());
-        setStreak(newStreak);
-      } else if (diffDays > 1) {
-        await AsyncStorage.setItem(STREAK_KEY, "1");
-        setStreak(1);
-      }
+      updateMarkedDates(deadlinesData, null);
     } catch (error) {
-      console.error("Error checking streak:", error);
+      console.error('Error loading data:', error);
     }
   };
 
-  const completeChallenge = async () => {
-    Alert.alert("🎉 Challenge Completed!", `You did: ${challenge}`, [
-      {
-        text: "Awesome!",
-        onPress: async () => {
-          const today = new Date().setHours(0, 0, 0, 0);
-          await AsyncStorage.setItem(LAST_PLAYED_KEY, today.toString());
+  const updateMarkedDates = (deadlinesData: { [key: string]: number[] }, selected: string | null) => {
+    const marked: MarkedDates = {};
+    
+    Object.entries(deadlinesData).forEach(([date, taskIds]) => {
+      marked[date] = {
+        marked: true,
+        dotColor: getTaskStatusColor(taskIds),
+      };
+    });
 
-          const newStreak = streak + 1;
-          await AsyncStorage.setItem(STREAK_KEY, newStreak.toString());
+    if (selected) {
+      marked[selected] = {
+        ...marked[selected],
+        selected: true,
+        selectedColor: '#2196F3',
+      };
+    }
 
-          setStreak(newStreak);
-          setChallenge(getRandomChallenge());
-          animateCard();
-        },
-      },
-    ]);
+    setMarkedDates(marked);
   };
 
-  return (
-    <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.container}>
-      <Animated.View style={[styles.cardContainer, { transform: [{ scale: scaleAnim }] }]}>
-        <Card style={styles.card} elevation={5}>
-          <Card.Title title="🔥 Streak Tracker" subtitle={`Current Streak: ${streak} days`} />
-          <Card.Content>
-            <Text style={styles.challengeText}>{challenge}</Text>
-          </Card.Content>
-          <Card.Actions>
-            <Button mode="contained" icon="check-circle" onPress={completeChallenge} style={styles.button}>
-              I Did It!
-            </Button>
-          </Card.Actions>
-        </Card>
-      </Animated.View>
-    </LinearGradient>
+  const getTaskStatusColor = (taskIds: number[]): string => {
+    return '#2196F3';
+  };
+
+  const handleDateSelect = (day: DateData) => {
+    const selectedDateString = day.dateString;
+    setSelectedDate(selectedDateString);
+    updateMarkedDates(deadlines, selectedDateString);
+
+    const taskIds = deadlines[selectedDateString] || [];
+    const tasksForDate = tasks.filter(task => taskIds.includes(task.id));
+    setSelectedDateTasks(tasksForDate);
+  };
+
+  const TaskStatusIndicator = ({ status }: { status: string }) => (
+    <View style={[
+      styles.statusDot,
+      { backgroundColor: status === 'Completed' ? '#4CAF50' : '#2196F3' }
+    ]} />
   );
-};
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Calendar
+        style={styles.calendar}
+        onDayPress={handleDateSelect}
+        markedDates={markedDates}
+        theme={{
+          selectedDayBackgroundColor: '#2196F3',
+          todayTextColor: '#2196F3',
+          arrowColor: '#2196F3',
+          monthTextColor: '#2196F3',
+          textMonthFontWeight: 'bold',
+          textDayFontSize: 16,
+          textMonthFontSize: 18,
+        }}
+      />
+
+      <View style={styles.legendContainer}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#2196F3' }]} />
+          <Text style={styles.legendText}>Pending Tasks</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#4CAF50' }]} />
+          <Text style={styles.legendText}>Completed Tasks</Text>
+        </View>
+      </View>
+
+      <View style={styles.taskListContainer}>
+        <Text style={styles.taskListTitle}>
+          {selectedDate 
+            ? `Tasks for ${selectedDate}`
+            : 'Select a date to view tasks'}
+        </Text>
+        
+        <ScrollView style={styles.taskList}>
+          {selectedDateTasks.length > 0 ? (
+            selectedDateTasks.map((task) => (
+              <View key={task.id} style={styles.taskItem}>
+                <View style={styles.taskHeader}>
+                  <Text style={styles.taskTitle}>{task.title}</Text>
+                  <TaskStatusIndicator status={task.status} />
+                </View>
+                <Text style={styles.taskDescription}>{task.description}</Text>
+                <Text style={styles.taskStatus}>Status: {task.status}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noTasksText}>
+              {selectedDate 
+                ? 'No tasks for this date'
+                : 'Select a date to view tasks'}
+            </Text>
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#F5F5F5',
   },
-  cardContainer: {
-    width: "90%",
+  calendar: {
+    borderRadius: 10,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    backgroundColor: 'white',
+    margin: 10,
   },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 15,
+  legendContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 10,
+    backgroundColor: 'white',
+    marginHorizontal: 10,
+    borderRadius: 8,
+    marginTop: 5,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 5,
+  },
+  legendText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  taskListContainer: {
+    flex: 1,
+    backgroundColor: 'white',
+    margin: 10,
+    borderRadius: 10,
     padding: 15,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
-  challengeText: {
+  taskListTitle: {
     fontSize: 18,
-    fontWeight: "600",
-    textAlign: "center",
-    marginBottom: 15,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333',
   },
-  button: {
-    marginTop: 10,
-    width: "100%",
-    backgroundColor: "#ff4081",
+  taskList: {
+    flex: 1,
+  },
+  taskItem: {
+    backgroundColor: '#f8f8f8',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  taskTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+  },
+  taskDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  taskStatus: {
+    fontSize: 12,
+    color: '#888',
+  },
+  statusDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: 8,
+  },
+  noTasksText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    marginTop: 20,
   },
 });
-
-export default explore;
