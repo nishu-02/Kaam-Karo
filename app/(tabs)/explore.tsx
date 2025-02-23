@@ -1,109 +1,136 @@
-import { StyleSheet, Image, Platform } from 'react-native';
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, Animated, Alert } from "react-native";
+import { Card, Button } from "react-native-paper";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import LinearGradient from "react-native-linear-gradient";
 
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { IconSymbol } from '@/components/ui/IconSymbol';
+const STREAK_KEY = "streak";
+const LAST_PLAYED_KEY = "last_played";
 
-export default function TabTwoScreen() {
+const challenges = [
+  "🔥 Do 10 push-ups!",
+  "😊 Say something nice to yourself!",
+  "😂 Tell a joke to a friend!",
+  "🤸 Stretch for 30 seconds!",
+  "🎵 Dance to your favorite song!",
+  "📖 Read 1 page of a book!",
+];
+
+const getRandomChallenge = () => challenges[Math.floor(Math.random() * challenges.length)];
+
+const explore = () => {
+  const [streak, setStreak] = useState<number>(0);
+  const [challenge, setChallenge] = useState<string>("");
+  const scaleAnim = new Animated.Value(0.9); // Animation for pop effect
+
+  useEffect(() => {
+    checkStreak();
+    setChallenge(getRandomChallenge());
+    animateCard();
+  }, []);
+
+  const animateCard = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 3,
+      tension: 100,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const checkStreak = async () => {
+    try {
+      const lastPlayed = await AsyncStorage.getItem(LAST_PLAYED_KEY);
+      const storedStreak = await AsyncStorage.getItem(STREAK_KEY);
+
+      const today = new Date().setHours(0, 0, 0, 0);
+      const lastDate = lastPlayed ? new Date(parseInt(lastPlayed)).setHours(0, 0, 0, 0) : null;
+
+      if (!lastDate) {
+        await AsyncStorage.setItem(STREAK_KEY, "1");
+        await AsyncStorage.setItem(LAST_PLAYED_KEY, today.toString());
+        setStreak(1);
+        return;
+      }
+
+      const diffDays = (today - lastDate) / (1000 * 60 * 60 * 24);
+
+      if (diffDays === 1) {
+        const newStreak = (storedStreak ? parseInt(storedStreak) : 0) + 1;
+        await AsyncStorage.setItem(STREAK_KEY, newStreak.toString());
+        setStreak(newStreak);
+      } else if (diffDays > 1) {
+        await AsyncStorage.setItem(STREAK_KEY, "1");
+        setStreak(1);
+      }
+    } catch (error) {
+      console.error("Error checking streak:", error);
+    }
+  };
+
+  const completeChallenge = async () => {
+    Alert.alert("🎉 Challenge Completed!", `You did: ${challenge}`, [
+      {
+        text: "Awesome!",
+        onPress: async () => {
+          const today = new Date().setHours(0, 0, 0, 0);
+          await AsyncStorage.setItem(LAST_PLAYED_KEY, today.toString());
+
+          const newStreak = streak + 1;
+          await AsyncStorage.setItem(STREAK_KEY, newStreak.toString());
+
+          setStreak(newStreak);
+          setChallenge(getRandomChallenge());
+          animateCard();
+        },
+      },
+    ]);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Explore</ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image source={require('@/assets/images/react-logo.png')} style={{ alignSelf: 'center' }} />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Custom fonts">
-        <ThemedText>
-          Open <ThemedText type="defaultSemiBold">app/_layout.tsx</ThemedText> to see how to load{' '}
-          <ThemedText style={{ fontFamily: 'SpaceMono' }}>
-            custom fonts such as this one.
-          </ThemedText>
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/versions/latest/sdk/font">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user's current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful <ThemedText type="defaultSemiBold">react-native-reanimated</ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
-        })}
-      </Collapsible>
-    </ParallaxScrollView>
+    <LinearGradient colors={["#6a11cb", "#2575fc"]} style={styles.container}>
+      <Animated.View style={[styles.cardContainer, { transform: [{ scale: scaleAnim }] }]}>
+        <Card style={styles.card} elevation={5}>
+          <Card.Title title="🔥 Streak Tracker" subtitle={`Current Streak: ${streak} days`} />
+          <Card.Content>
+            <Text style={styles.challengeText}>{challenge}</Text>
+          </Card.Content>
+          <Card.Actions>
+            <Button mode="contained" icon="check-circle" onPress={completeChallenge} style={styles.button}>
+              I Did It!
+            </Button>
+          </Card.Actions>
+        </Card>
+      </Animated.View>
+    </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  titleContainer: {
-    flexDirection: 'row',
-    gap: 8,
+  cardContainer: {
+    width: "90%",
+  },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 15,
+  },
+  challengeText: {
+    fontSize: 18,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 15,
+  },
+  button: {
+    marginTop: 10,
+    width: "100%",
+    backgroundColor: "#ff4081",
   },
 });
+
+export default explore;
