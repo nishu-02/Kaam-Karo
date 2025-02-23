@@ -6,24 +6,26 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
+// Redux Setup
+import { Provider } from 'react-redux';
+import { store } from '@/hooks/store';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
   useEffect(() => {
-    if (loaded) {
+    if (fontsLoaded) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [fontsLoaded]);
 
-  if (!loaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -35,5 +37,14 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
+  );
+}
+
+// ✅ Wrap Everything in Redux <Provider>
+export default function RootLayout() {
+  return (
+    <Provider store={store}>
+      <RootLayoutInner />
+    </Provider>
   );
 }
