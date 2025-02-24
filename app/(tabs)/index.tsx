@@ -16,8 +16,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Calendar, DateData } from "react-native-calendars";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Provider } from "react-redux";
-import { store } from "../../hooks/store";
+import { useAppSelector } from "@/hooks/useAppSelector";
+import { themes } from "@/hooks/themeSlice";
 
 const API_KEY = "Wam_xPaHALBkRbPkXjM0uhNZ5pfnixeZfDnYnB6S3kY";
 const URL = "https://todocrud.chiggydoes.tech";
@@ -29,14 +29,17 @@ interface Note {
   description: string;
   status: string;
   created_at: string;
-  deadline?: string; // Added deadline field
+  deadline?: string;
 }
 
 interface Deadlines {
-  [key: string]: number[]; // Date string -> array of task IDs
+  [key: string]: number[];
 }
 
 export default function HomeScreen() {
+  const currentTheme = useAppSelector((state) => state.theme.currentTheme);
+  const themeColors = themes[currentTheme] || themes.default;
+
   const [notes, setNotes] = useState<Note[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -90,7 +93,7 @@ export default function HomeScreen() {
 
   const handleDateSelect = (day: DateData) => {
     setSelectedDate(day.dateString);
-    setShowCalendar(false); // Hiding the calendar after the date selection
+    setShowCalendar(false);
   };
 
   const clearDeadline = () => {
@@ -120,7 +123,6 @@ export default function HomeScreen() {
   const setTaskDeadline = async (taskId: number, date: string) => {
     const newDeadlines = { ...deadlines };
 
-    // Remove task from any existing deadline
     Object.keys(newDeadlines).forEach((key) => {
       newDeadlines[key] = newDeadlines[key].filter((id) => id !== taskId);
       if (newDeadlines[key].length === 0) {
@@ -128,7 +130,6 @@ export default function HomeScreen() {
       }
     });
 
-    // Add task to new deadline
     if (!newDeadlines[date]) {
       newDeadlines[date] = [];
     }
@@ -148,13 +149,11 @@ export default function HomeScreen() {
     await saveDeadlines(newDeadlines);
   };
 
-  // Modified showModal to handle deadline selection
   const showModal = (note: Note | null = null) => {
     if (note) {
       setTaskId(note.id);
       setTitle(note.title);
       setDescription(note.description);
-      // Find deadline for this task
       const deadline = Object.entries(deadlines).find(([_, ids]) =>
         ids.includes(note.id)
       )?.[0];
@@ -174,7 +173,6 @@ export default function HomeScreen() {
     }).start();
   };
 
-  // Modifying the current api addTask to include deadline
   const addTask = async () => {
     if (!title.trim()) {
       alert("Please enter a valid title");
@@ -211,7 +209,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Modified updateTask to handle deadline updates
   const updateTask = async () => {
     if (!taskId) return;
 
@@ -245,7 +242,52 @@ export default function HomeScreen() {
     }
   };
 
-  // Modified deleteTask to clean up deadlines
+  const completeTask = async (id: number) => {
+    try {
+      // First get the existing task data
+      const task = notes.find(note => note.id === id);
+      if (!task) {
+        console.error('Task not found');
+        return;
+      }
+
+      // Log the existing task data
+      console.log('Existing task:', task);
+
+      const updateData = {
+        title: task.title,
+        description: task.description,
+        status: "completed",
+        created_at: task.created_at,
+      };
+
+      console.log('Sending update data:', updateData);
+
+      const response = await fetch(`${URL}/todos/${id}`, {
+        method: "PUT",
+        headers: {
+          "X-API-Key": API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updateData),
+      });
+
+      console.log('Response status:', response.status);
+      const responseData = await response.text();
+      console.log('Response body:', responseData);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}, Body: ${responseData}`);
+      }
+
+      console.log("Task marked as completed");
+      fetchTodos();
+    } catch (err) {
+      console.error('Complete task error:', err);
+      alert('Failed to complete task. Please try again.');
+    }
+  };
+
   const deleteTask = async (id: number) => {
     try {
       const response = await fetch(`${URL}/todos/${id}`, {
@@ -267,7 +309,6 @@ export default function HomeScreen() {
     }
   };
 
-  // Get deadline for a specific task
   const getTaskDeadline = (taskId: number): string | undefined => {
     return Object.entries(deadlines).find(([date, ids]) =>
       ids.includes(taskId)
@@ -275,15 +316,15 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <StatusBar
-        backgroundColor="#2196F3"
-        barStyle="light-content"
-        translucent={false}
-      />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: themeColors.background }]}
+      edges={["top"]}
+    >
+      <StatusBar backgroundColor={themeColors.primary} translucent={false} />
+
       {error ? (
         <View>
-          <Text>{error}</Text>
+          <Text style={[styles.errorText]}>{error}</Text>
         </View>
       ) : (
         <FlatList
@@ -291,40 +332,92 @@ export default function HomeScreen() {
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => showModal(item)}>
-              <View style={styles.todoItem}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text style={styles.description}>{item.description}</Text>
-                <Text style={styles.status}>Status: {item.status}</Text>
-                <Text style={styles.date}>Created: {item.created_at}</Text>
+              <View
+                style={[styles.todoItem, { backgroundColor: themeColors.card }]}
+              >
+                <Text style={[styles.title, { color: themeColors.text }]}>
+                  {item.title}
+                </Text>
+                <Text
+                  style={[
+                    styles.description,
+                    { color: themeColors.secondaryText },
+                  ]}
+                >
+                  {item.description}
+                </Text>
+                <Text style={[styles.status, { color: themeColors.accent }]}>
+                  Status: {item.status}
+                </Text>
+                <Text
+                  style={[styles.date, { color: themeColors.secondaryText }]}
+                >
+                  Created: {item.created_at}
+                </Text>
+
                 {getTaskDeadline(item.id) && (
-                  <Text style={styles.deadline}>
+                  <Text
+                    style={[styles.deadline, { color: themeColors.warning }]}
+                  >
                     Deadline: {getTaskDeadline(item.id)}
                   </Text>
                 )}
+
                 <View style={styles.buttonContainer}>
                   <TouchableOpacity
-                    style={[styles.button, styles.completeButton]}
-                    onPress={() => updateTask()}
+                    style={[
+                      styles.button,
+                      styles.completeButton,
+                      { backgroundColor: themeColors.success },
+                      item.status === "Completed" && styles.disabledButton,
+                    ]}
+                    onPress={() => completeTask(item.id)}
+                    disabled={item.status === "Completed"}
                   >
-                    <Text style={styles.buttonText}>Complete</Text>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        { color: themeColors.buttonText },
+                        item.status === "Completed" &&
+                          styles.disabledButtonText,
+                      ]}
+                    >
+                      {item.status === "Completed" ? "Completed" : "Complete"}
+                    </Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.button, styles.deleteButton]}
                     onPress={() => deleteTask(item.id)}
                   >
-                    <Text style={styles.buttonText}>Delete</Text>
+                    <Text
+                      style={[
+                        styles.buttonText,
+                        { color: themeColors.buttonText },
+                      ]}
+                    >
+                      Delete
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </TouchableOpacity>
           )}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No Todos Found</Text>
+            <Text style={[styles.emptyText, { color: themeColors.text }]}>
+              No Todos Found
+            </Text>
           }
         />
       )}
-      <TouchableOpacity style={styles.addButton} onPress={() => showModal()}>
-        <Text style={styles.addButtonText}> + Add a Task </Text>
+
+      <TouchableOpacity
+        style={[styles.addButton, { backgroundColor: themeColors.primary }]}
+        onPress={() => showModal()}
+      >
+        <Text style={[styles.addButtonText, { color: themeColors.buttonText }]}>
+          + Add a Task
+        </Text>
       </TouchableOpacity>
 
       <Modal visible={modalVisible} transparent onRequestClose={hideModal}>
@@ -344,19 +437,21 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
+              <Text style={[styles.modalTitle, { color: themeColors.text }]}>
                 {taskId ? "Edit Task" : "Add New Task"}
               </Text>
               <TouchableOpacity onPress={hideModal}>
-                <Text style={styles.closeButton}>X</Text>
+                <Text style={[styles.closeButton]}>X</Text>
               </TouchableOpacity>
             </View>
+
             <TextInput
-              style={styles.input}
+              style={[styles.input]}
               placeholder="Enter Title"
               value={title}
               onChangeText={setTitle}
             />
+
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="Enter Description"
@@ -367,27 +462,43 @@ export default function HomeScreen() {
             />
 
             <View style={styles.deadlineContainer}>
-              <Text style={styles.deadlineLabel}>Deadline:</Text>
+              <Text style={[styles.deadlineLabel, { color: themeColors.text }]}>
+                Deadline:
+              </Text>
               <View style={styles.deadlineActions}>
                 <TouchableOpacity
-                  style={styles.calendarButton}
+                  style={[styles.calendarButton]}
                   onPress={() => setShowCalendar(!showCalendar)}
                 >
-                  <Text style={styles.calendarButtonText}>
+                  <Text
+                    style={[
+                      styles.calendarButtonText,
+                      { color: themeColors.buttonText },
+                    ]}
+                  >
                     {showCalendar ? "Hide Calendar" : "Show Calendar"}
                   </Text>
                 </TouchableOpacity>
+
                 {selectedDate && (
                   <TouchableOpacity
-                    style={styles.clearButton}
+                    style={[styles.clearButton]}
                     onPress={clearDeadline}
                   >
-                    <Text style={styles.clearButtonText}>Clear</Text>
+                    <Text
+                      style={[
+                        styles.clearButtonText,
+                        { color: themeColors.buttonText },
+                      ]}
+                    >
+                      Clear
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
+
               {selectedDate && (
-                <Text style={styles.selectedDate}>
+                <Text style={[styles.selectedDate]}>
                   Selected: {selectedDate}
                 </Text>
               )}
@@ -399,22 +510,23 @@ export default function HomeScreen() {
                 markedDates={{
                   [selectedDate || ""]: {
                     selected: true,
-                    selectedColor: "#2196F3",
                   },
                 }}
-                style={styles.calendar}
-                theme={{
-                  selectedDayBackgroundColor: "#2196F3",
-                  todayTextColor: "#2196F3",
-                  arrowColor: "#2196F3",
+                style={[styles.calendar]}
+                themeColors={{
+                  selectedDayBackgroundColor: themeColors.primary,
+                  arrowColor: themeColors.primary,
+                  textSectionTitleColor: themeColors.text,
+                  dayTextColor: themeColors.text,
                 }}
               />
             )}
+
             <TouchableOpacity
-              style={styles.submitButton}
+              style={[styles.submitButton]}
               onPress={taskId ? updateTask : addTask}
             >
-              <Text style={styles.submitButtonText}>
+              <Text style={[styles.submitButtonText]}>
                 {taskId ? "Update Task" : "Add Task"}
               </Text>
             </TouchableOpacity>
@@ -447,7 +559,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.7)",
   },
-
   title: {
     fontSize: 20,
     fontWeight: "700",
@@ -458,6 +569,10 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.1)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  errorText: {
+    fontSize: 16,
+    color: "red",
   },
   description: {
     fontSize: 17,
@@ -498,6 +613,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     fontWeight: "bold",
+  },
+  disabledButton: {
+    opacity: 0.5,
+    backgroundColor: "#ccc",
+  },
+  disabledButtonText: {
+    color: "#666",
   },
   emptyText: {
     textAlign: "center",
@@ -592,7 +714,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "condensedBold",
   },
-
   deadlineContainer: {
     marginBottom: 15,
     padding: 10,
@@ -646,6 +767,6 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   deadline: {
-    fontWeight: "condensedBold"
-  }
+    fontWeight: "condensedBold",
+  },
 });
