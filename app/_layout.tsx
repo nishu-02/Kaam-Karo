@@ -10,7 +10,6 @@ import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { store } from '@/hooks/store';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import ThemeScreen from '@/app/Themes';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -41,7 +40,7 @@ function RootLayoutInner() {
   );
 }
 
-// ✅ Wrap Everything in Redux <Provider>
+// Wrap Everything in Redux <Provider>
 export default function RootLayout() {
   return (
     <Provider store={store}>

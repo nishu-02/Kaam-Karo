@@ -18,6 +18,7 @@ import { Calendar, DateData } from "react-native-calendars";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { themes } from "@/hooks/themeSlice";
+import { useThemeColor } from "@/hooks/useThemeColor";
 
 const API_KEY = "Wam_xPaHALBkRbPkXjM0uhNZ5pfnixeZfDnYnB6S3kY";
 const URL = "https://todocrud.chiggydoes.tech";
@@ -245,14 +246,14 @@ export default function HomeScreen() {
   const completeTask = async (id: number) => {
     try {
       // First get the existing task data
-      const task = notes.find(note => note.id === id);
+      const task = notes.find((note) => note.id === id);
       if (!task) {
-        console.error('Task not found');
+        console.error("Task not found");
         return;
       }
 
       // Log the existing task data
-      console.log('Existing task:', task);
+      console.log("Existing task:", task);
 
       const updateData = {
         title: task.title,
@@ -261,7 +262,7 @@ export default function HomeScreen() {
         created_at: task.created_at,
       };
 
-      console.log('Sending update data:', updateData);
+      console.log("Sending update data:", updateData);
 
       const response = await fetch(`${URL}/todos/${id}`, {
         method: "PUT",
@@ -272,19 +273,21 @@ export default function HomeScreen() {
         body: JSON.stringify(updateData),
       });
 
-      console.log('Response status:', response.status);
+      console.log("Response status:", response.status);
       const responseData = await response.text();
-      console.log('Response body:', responseData);
+      console.log("Response body:", responseData);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}, Body: ${responseData}`);
+        throw new Error(
+          `HTTP error! Status: ${response.status}, Body: ${responseData}`
+        );
       }
 
       console.log("Task marked as completed");
       fetchTodos();
     } catch (err) {
-      console.error('Complete task error:', err);
-      alert('Failed to complete task. Please try again.');
+      console.error("Complete task error:", err);
+      alert("Failed to complete task. Please try again.");
     }
   };
 
@@ -330,6 +333,7 @@ export default function HomeScreen() {
         <FlatList
           data={notes}
           keyExtractor={(item) => item.id.toString()}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => (
             <TouchableOpacity onPress={() => showModal(item)}>
               <View
@@ -541,6 +545,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+    padding: 10,
   },
   todoItem: {
     backgroundColor: "rgba(255, 255, 255, 0)",
@@ -576,19 +581,19 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 17,
-    color: "#444",
+    color: "black",
     marginBottom: 5,
     lineHeight: 24,
     fontStyle: "italic",
     opacity: 0.9,
   },
   status: {
-    fontSize: 14,
-    color: "#888",
+    fontSize: 18,
+    color: "black",
   },
   date: {
-    fontSize: 14,
-    color: "#888",
+    fontSize: 16,
+    color: "teal",
     marginBottom: 10,
   },
   buttonContainer: {
@@ -604,9 +609,13 @@ const styles = StyleSheet.create({
   },
   completeButton: {
     backgroundColor: "#4CAF50",
+    borderWidth:1,
+    borderRadius:16
   },
   deleteButton: {
     backgroundColor: "#F44336",
+    borderRadius:16,
+    elevation:4
   },
   buttonText: {
     color: "white",
@@ -629,8 +638,8 @@ const styles = StyleSheet.create({
   },
   addButton: {
     position: "absolute",
-    bottom: 180,
-    right: 75,
+    bottom: 30,
+    right: 25,
     backgroundColor: "forestgreen",
     width: 200,
     height: 50,
@@ -685,7 +694,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "condensedBold",
   },
   closeButton: {
     fontSize: 19,
@@ -706,18 +715,18 @@ const styles = StyleSheet.create({
   submitButton: {
     backgroundColor: "#fcae1e",
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 19,
     alignItems: "center",
   },
   submitButtonText: {
-    color: "white",
+    color: "teal",
     fontSize: 18,
     fontWeight: "condensedBold",
   },
   deadlineContainer: {
     marginBottom: 15,
     padding: 10,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "beige",
     borderRadius: 8,
   },
   deadlineLabel: {
@@ -732,9 +741,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   calendarButton: {
-    backgroundColor: "#2196F3",
+    backgroundColor: "teal",
     padding: 10,
-    borderRadius: 6,
+    borderRadius: 10,
     flex: 1,
     marginRight: 10,
   },

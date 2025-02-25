@@ -3,9 +3,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 export interface ThemeColors {
   primary: string;
   secondary: string;
+  secondaryText: string;
   background: string;
   text: string;
   cardBackground: string;
+  card: string;
   buttonBackground: string;
   buttonText: string;
   headerBackground: string;
@@ -13,7 +15,11 @@ export interface ThemeColors {
   borderColor: string;
   calendarBackground: string;
   statusBarColor: string;
+  success: string;
+  accent: string;
+  warning: string;
 }
+
 
 export const themes: Record<string, ThemeColors> = {
   default: {
@@ -21,212 +27,130 @@ export const themes: Record<string, ThemeColors> = {
     secondary: '#4CAF50',
     background: '#F5F5F5',
     text: '#333333',
+    secondaryText: '#555555',
     cardBackground: '#FFFFFF',
+    card: '#EEEEEE',
     buttonBackground: '#2196F3',
     buttonText: '#FFFFFF',
     headerBackground: '#2196F3',
     headerText: '#FFFFFF',
     borderColor: '#DDDDDD',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#2196F3'
+    statusBarColor: '#2196F3',
+    accent: '#FFC107',
+    warning: '#FF9800',
+    success: '#bcfc1e'
   },
   dark: {
     primary: '#BB86FC',
     secondary: '#03DAC6',
     background: '#121212',
     text: '#FFFFFF',
+    secondaryText: '#CCCCCC',
     cardBackground: '#1E1E1E',
+    card: '#2A2A2A',
     buttonBackground: '#BB86FC',
     buttonText: '#000000',
     headerBackground: '#1E1E1E',
     headerText: '#FFFFFF',
     borderColor: '#333333',
     calendarBackground: '#1E1E1E',
-    statusBarColor: '#000000'
+    statusBarColor: '#000000',
+    accent: '#FF4081',
+    warning: '#FF5722'
   },
   nature: {
     primary: '#4CAF50',
     secondary: '#8BC34A',
     background: '#E8F5E9',
     text: '#1B5E20',
+    secondaryText: '#388E3C',
     cardBackground: '#FFFFFF',
+    card: '#C8E6C9',
     buttonBackground: '#4CAF50',
     buttonText: '#FFFFFF',
     headerBackground: '#2E7D32',
     headerText: '#FFFFFF',
     borderColor: '#A5D6A7',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#2E7D32'
+    statusBarColor: '#2E7D32',
+    accent: '#FFD700',
+    warning: '#F57C00'
   },
   ocean: {
     primary: '#0288D1',
     secondary: '#03A9F4',
     background: '#E1F5FE',
     text: '#01579B',
+    secondaryText: '#0277BD',
     cardBackground: '#FFFFFF',
+    card: '#B3E5FC',
     buttonBackground: '#0288D1',
     buttonText: '#FFFFFF',
     headerBackground: '#0277BD',
     headerText: '#FFFFFF',
     borderColor: '#81D4FA',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#0277BD'
+    statusBarColor: '#0277BD',
+    accent: '#00E5FF',
+    warning: '#FFA726'
   },
   sunset: {
     primary: '#FF5722',
     secondary: '#FF9800',
     background: '#FBE9E7',
     text: '#BF360C',
+    secondaryText: '#D84315',
     cardBackground: '#FFFFFF',
+    card: '#FFCCBC',
     buttonBackground: '#FF5722',
     buttonText: '#FFFFFF',
     headerBackground: '#E64A19',
     headerText: '#FFFFFF',
-    borderColor: '#FFCCBC',
+    borderColor: '#FFAB91',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#E64A19'
+    statusBarColor: '#E64A19',
+    accent: '#FFD54F',
+    warning: '#FF7043'
   },
   lavender: {
     primary: '#9C27B0',
     secondary: '#BA68C8',
     background: '#F3E5F5',
     text: '#4A148C',
+    secondaryText: '#6A1B9A',
     cardBackground: '#FFFFFF',
+    card: '#E1BEE7',
     buttonBackground: '#9C27B0',
     buttonText: '#FFFFFF',
     headerBackground: '#7B1FA2',
     headerText: '#FFFFFF',
-    borderColor: '#E1BEE7',
+    borderColor: '#D1C4E9',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#7B1FA2'
+    statusBarColor: '#7B1FA2',
+    accent: '#FF4081',
+    warning: '#FFAB40'
   },
   mint: {
     primary: '#009688',
     secondary: '#4DB6AC',
     background: '#E0F2F1',
     text: '#004D40',
+    secondaryText: '#00796B',
     cardBackground: '#FFFFFF',
+    card: '#B2DFDB',
     buttonBackground: '#009688',
     buttonText: '#FFFFFF',
     headerBackground: '#00796B',
     headerText: '#FFFFFF',
     borderColor: '#B2DFDB',
     calendarBackground: '#FFFFFF',
-    statusBarColor: '#00796B'
+    statusBarColor: '#00796B',
+    accent: '#FFC107',
+    warning: '#FF7043'
   },
-  rose: {
-    primary: '#E91E63',
-    secondary: '#F06292',
-    background: '#FCE4EC',
-    text: '#880E4F',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#E91E63',
-    buttonText: '#FFFFFF',
-    headerBackground: '#C2185B',
-    headerText: '#FFFFFF',
-    borderColor: '#F8BBD0',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#C2185B'
-  },
-  gold: {
-    primary: '#FFC107',
-    secondary: '#FFD54F',
-    background: '#FFF8E1',
-    text: '#FF6F00',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#FFC107',
-    buttonText: '#000000',
-    headerBackground: '#FFA000',
-    headerText: '#000000',
-    borderColor: '#FFE082',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#FFA000'
-  },
-  slate: {
-    primary: '#607D8B',
-    secondary: '#90A4AE',
-    background: '#ECEFF1',
-    text: '#263238',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#607D8B',
-    buttonText: '#FFFFFF',
-    headerBackground: '#455A64',
-    headerText: '#FFFFFF',
-    borderColor: '#CFD8DC',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#455A64'
-  },
-  cherry: {
-    primary: '#D32F2F',
-    secondary: '#E57373',
-    background: '#FFEBEE',
-    text: '#B71C1C',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#D32F2F',
-    buttonText: '#FFFFFF',
-    headerBackground: '#C62828',
-    headerText: '#FFFFFF',
-    borderColor: '#FFCDD2',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#C62828'
-  },
-  forest: {
-    primary: '#388E3C',
-    secondary: '#81C784',
-    background: '#E8F5E9',
-    text: '#1B5E20',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#388E3C',
-    buttonText: '#FFFFFF',
-    headerBackground: '#2E7D32',
-    headerText: '#FFFFFF',
-    borderColor: '#C8E6C9',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#2E7D32'
-  },
-  midnight: {
-    primary: '#3F51B5',
-    secondary: '#7986CB',
-    background: '#E8EAF6',
-    text: '#1A237E',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#3F51B5',
-    buttonText: '#FFFFFF',
-    headerBackground: '#303F9F',
-    headerText: '#FFFFFF',
-    borderColor: '#C5CAE9',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#303F9F'
-  },
-  coral: {
-    primary: '#FF7043',
-    secondary: '#FFB74D',
-    background: '#FBE9E7',
-    text: '#BF360C',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#FF7043',
-    buttonText: '#FFFFFF',
-    headerBackground: '#E64A19',
-    headerText: '#FFFFFF',
-    borderColor: '#FFCCBC',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#E64A19'
-  },
-  arctic: {
-    primary: '#00BCD4',
-    secondary: '#4DD0E1',
-    background: '#E0F7FA',
-    text: '#006064',
-    cardBackground: '#FFFFFF',
-    buttonBackground: '#00BCD4',
-    buttonText: '#FFFFFF',
-    headerBackground: '#0097A7',
-    headerText: '#FFFFFF',
-    borderColor: '#B2EBF2',
-    calendarBackground: '#FFFFFF',
-    statusBarColor: '#0097A7'
-  }
 };
+
 
 interface ThemeState {
   currentTheme: string;

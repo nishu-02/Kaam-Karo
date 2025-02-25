@@ -6,17 +6,17 @@ import { Platform } from 'react-native';
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { useAppSelector } from '@/hooks/useAppSelector';  // ✅ Redux Selector
-import { themes } from '@/hooks/themeSlice';  // ✅ Import themes
+import { useAppSelector } from '@/hooks/useAppSelector';  // Redux Selector
+import { themes } from '@/hooks/themeSlice';  // Import themes
 
 export default function TabLayout() {
-  // ✅ Get the current theme from Redux
+  // Get the current theme from Redux
   const currentTheme = useAppSelector((state) => state.theme.currentTheme);
   const themeColors = themes[currentTheme] || themes.default; // Fallback if undefined
   const navigationTheme = currentTheme === 'dark' ? DarkTheme : DefaultTheme;
 
   return (
-    // ✅ Wrap the entire tab layout in ThemeProvider
+    // Wrap the entire tab layout in ThemeProvider
     <ThemeProvider value={navigationTheme}>
       <Tabs
         screenOptions={{
